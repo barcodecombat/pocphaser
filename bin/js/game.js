@@ -16,6 +16,7 @@ var CodeBarWar;
         Preloader.prototype.preload = function () {
             this.game.load.atlas('mainmenu_button', 'assets/buttons/mainmenu_button.png', 'assets/buttons/mainmenu_button.json');
             this.load.image('mainmenu_background', 'assets/menus/coquelicot.jpg');
+            this.game.load.spritesheet('hero', 'assets/characters/fille.png', 64, 64);
         };
         Preloader.prototype.create = function () {
             this.game.state.start('MainMenu', true, false);
@@ -70,6 +71,7 @@ var CodeBarWar;
             this.charJSON = this.game.cache.getJSON('characters');
             this.game.load.tilemap('donjon', 'assets/maps/donjon1.json', null, Phaser.Tilemap.TILED_JSON);
             this.game.load.image('tiles', 'assets/maps/tileset1.png');
+            this.game.load.atlasJSONHash('fille', 'assets/characters/fille.png', 'assets/characters/animateFille.json');
         };
         Donjon.prototype.create = function () {
             this.game.stage.backgroundColor = '#787878';
@@ -78,6 +80,15 @@ var CodeBarWar;
             this.layer = this.map.createLayer('Donjon1');
             this.layer.resizeWorld();
             this.layer.wrap = true;
+            var sp = this.game.add.sprite(200, 200, "fille");
+            sp.scale.setTo(0.5, 0.5);
+            sp.animations.add("walkdown", [0, 1, 2]);
+            sp.animations.add("walkleft", [3, 4, 5]);
+            sp.animations.add("walkright", [6, 7, 8]);
+            sp.animations.add("walkup", [9, 10, 11]);
+            sp.animations.play('walkup', 9, true);
+        };
+        Donjon.prototype.update = function () {
         };
         return Donjon;
     }(Phaser.State));
@@ -92,6 +103,7 @@ var CodeBarWar;
         }
         LoaderDonjon.prototype.preload = function () {
             this.game.load.json('characters', 'assets/characters/characters.json');
+            this.game.load.json('animateFille', 'assets/characters/animateFille.json');
         };
         LoaderDonjon.prototype.create = function () {
             this.game.state.start('Donjon', true, false);
@@ -125,4 +137,22 @@ var CodeBarWar;
         return CodeBarWarMain;
     }(Phaser.Game));
     CodeBarWar.CodeBarWarMain = CodeBarWarMain;
+})(CodeBarWar || (CodeBarWar = {}));
+var CodeBarWar;
+(function (CodeBarWar) {
+    var Character = (function () {
+        function Character() {
+        }
+        return Character;
+    }());
+    CodeBarWar.Character = Character;
+})(CodeBarWar || (CodeBarWar = {}));
+var CodeBarWar;
+(function (CodeBarWar) {
+    var Player = (function () {
+        function Player() {
+        }
+        return Player;
+    }());
+    CodeBarWar.Player = Player;
 })(CodeBarWar || (CodeBarWar = {}));
