@@ -5,9 +5,9 @@ module CodeBarWar {
         sprite : Phaser.Sprite;
         game : CodeBarWarMain;
 
-        constructor(game:CodeBarWarMain){
+        constructor(game:CodeBarWarMain, source:string,posX:number,posY:number){
             this.game = game;
-            this.sprite = game.add.sprite(200,200,"fille");
+            this.sprite = game.add.sprite(posX,posY,source);
             this.sprite.scale.setTo(0.5,0.5);
             this.sprite.animations.add("walkdown",[0,1,2]);
             this.sprite.animations.add("walkleft",[3,4,5]);

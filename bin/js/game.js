@@ -78,13 +78,16 @@ var CodeBarWar;
     var Donjon = (function (_super) {
         __extends(Donjon, _super);
         function Donjon() {
-            return _super.apply(this, arguments) || this;
+            var _this = _super.apply(this, arguments) || this;
+            _this.monsters = [];
+            return _this;
         }
         Donjon.prototype.preload = function () {
             this.charJSON = this.game.cache.getJSON('characters');
             this.game.load.tilemap('donjon', 'assets/maps/donjon1.json', null, Phaser.Tilemap.TILED_JSON);
             this.game.load.image('tiles', 'assets/maps/tileset1.png');
             this.game.load.atlasJSONHash('fille', 'assets/characters/fille.png', 'assets/characters/animateFille.json');
+            this.game.load.atlasJSONHash('rose', 'assets/characters/rose.png', 'assets/characters/animateRose.json');
         };
         Donjon.prototype.create = function () {
             this.game.stage.backgroundColor = '#787878';
@@ -93,10 +96,14 @@ var CodeBarWar;
             this.layer = this.map.createLayer('Donjon1');
             this.layer.resizeWorld();
             this.layer.wrap = true;
-            this.hero = new CodeBarWar.Character(this.game);
+            this.hero = new CodeBarWar.Character(this.game, "fille", 200, 200);
+            this.monsters.push(new CodeBarWar.Character(this.game, "rose", 500, 300));
         };
         Donjon.prototype.update = function () {
             this.hero.update();
+            this.monsters.forEach(function (monster) {
+                monster.update();
+            });
         };
         return Donjon;
     }(Phaser.State));
@@ -149,9 +156,9 @@ var CodeBarWar;
 var CodeBarWar;
 (function (CodeBarWar) {
     var Character = (function () {
-        function Character(game) {
+        function Character(game, source, posX, posY) {
             this.game = game;
-            this.sprite = game.add.sprite(200, 200, "fille");
+            this.sprite = game.add.sprite(posX, posY, source);
             this.sprite.scale.setTo(0.5, 0.5);
             this.sprite.animations.add("walkdown", [0, 1, 2]);
             this.sprite.animations.add("walkleft", [3, 4, 5]);
