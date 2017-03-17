@@ -19,6 +19,19 @@ var CodeBarWar;
             this.game.load.spritesheet('hero', 'assets/characters/fille.png', 64, 64);
         };
         Preloader.prototype.create = function () {
+            var gameWidth = 1920;
+            var gameHeight = 1080;
+            if (this.game.device.desktop) {
+                //  If you have any desktop specific settings, they can go in here
+                //this.game.scale.maxWidth = gameWidth;
+                //this.game.scale.maxHeight = gameHeight;
+                this.game.scale.pageAlignHorizontally = true;
+                this.game.scale.pageAlignVertically = true;
+                this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+            }
+            else {
+            }
+            this.game.physics.startSystem(Phaser.Physics.ARCADE);
             this.game.state.start('MainMenu', true, false);
         };
         return Preloader;
@@ -80,15 +93,10 @@ var CodeBarWar;
             this.layer = this.map.createLayer('Donjon1');
             this.layer.resizeWorld();
             this.layer.wrap = true;
-            var sp = this.game.add.sprite(200, 200, "fille");
-            sp.scale.setTo(0.5, 0.5);
-            sp.animations.add("walkdown", [0, 1, 2]);
-            sp.animations.add("walkleft", [3, 4, 5]);
-            sp.animations.add("walkright", [6, 7, 8]);
-            sp.animations.add("walkup", [9, 10, 11]);
-            sp.animations.play('walkup', 9, true);
+            this.hero = new CodeBarWar.Character(this.game);
         };
         Donjon.prototype.update = function () {
+            this.hero.update();
         };
         return Donjon;
     }(Phaser.State));
@@ -141,8 +149,41 @@ var CodeBarWar;
 var CodeBarWar;
 (function (CodeBarWar) {
     var Character = (function () {
-        function Character() {
+        function Character(game) {
+            this.game = game;
+            this.sprite = game.add.sprite(200, 200, "fille");
+            this.sprite.scale.setTo(0.5, 0.5);
+            this.sprite.animations.add("walkdown", [0, 1, 2]);
+            this.sprite.animations.add("walkleft", [3, 4, 5]);
+            this.sprite.animations.add("walkright", [6, 7, 8]);
+            this.sprite.animations.add("walkup", [9, 10, 11]);
         }
+        Character.prototype.update = function () {
+            var movementOn = false;
+            if (this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+                this.sprite.x -= 2;
+                this.sprite.animations.play('walkleft', 9, true);
+                movementOn = true;
+            }
+            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
+                this.sprite.x += 2;
+                this.sprite.animations.play('walkright', 9, true);
+                movementOn = true;
+            }
+            if (this.game.input.keyboard.isDown(Phaser.Keyboard.UP)) {
+                this.sprite.y -= 2;
+                this.sprite.animations.play('walkup', 9, true);
+                movementOn = true;
+            }
+            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
+                this.sprite.y += 2;
+                this.sprite.animations.play('walkdown', 9, true);
+                movementOn = true;
+            }
+            if (movementOn == false) {
+                this.sprite.animations.stop(null, true);
+            }
+        };
         return Character;
     }());
     CodeBarWar.Character = Character;

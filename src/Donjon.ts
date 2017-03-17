@@ -4,6 +4,8 @@ module CodeBarWar {
         charJSON;
         map;
         layer;
+        sp;
+        hero : Character;
 
         preload() {
             this.charJSON = this.game.cache.getJSON('characters');    
@@ -19,18 +21,12 @@ module CodeBarWar {
             this.layer = this.map.createLayer('Donjon1');
             this.layer.resizeWorld();
             this.layer.wrap = true;
-            var sp = this.game.add.sprite(200,200,"fille");
-            sp.scale.setTo(0.5,0.5);
-            sp.animations.add("walkdown",[0,1,2]);
-            sp.animations.add("walkleft",[3,4,5]);
-            sp.animations.add("walkright",[6,7,8]);
-            sp.animations.add("walkup",[9,10,11]);
-            sp.animations.play('walkup', 9, true);
+            this.hero = new Character(<CodeBarWarMain>this.game);
             
         }
 
         update(){
-            
+            this.hero.update();
         }
 
             
