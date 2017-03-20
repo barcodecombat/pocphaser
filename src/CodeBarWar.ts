@@ -4,7 +4,7 @@ module CodeBarWar {
 
         constructor() {
 
-            super(1600, 900, Phaser.AUTO, 'content', null);
+            super(1600, 640, Phaser.AUTO, 'content', null);
 
             // Main Menu
             // this.state.add('Boot', Boot, true);

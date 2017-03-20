@@ -23,16 +23,13 @@ module CodeBarWar {
             this.layer = this.map.createLayer('Donjon1');
             this.layer.resizeWorld();
             this.layer.wrap = true;
-            this.hero = new Character(<CodeBarWarMain>this.game,"fille",200,200);
-            this.monsters.push(new Character(<CodeBarWarMain>this.game,"rose",500,300));
+            this.hero = new Character(<CodeBarWarMain>this.game,"fille",320,96,true);
+            this.monsters.push(new Character(<CodeBarWarMain>this.game,"rose",544,320,false));
             
         }
 
         update(){
-            this.hero.update();
-            this.monsters.forEach(function(monster){
-                monster.update();
-            });
+            Character.update();
         }
 
     }

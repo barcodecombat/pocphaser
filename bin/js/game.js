@@ -19,12 +19,12 @@ var CodeBarWar;
             this.game.load.spritesheet('hero', 'assets/characters/fille.png', 64, 64);
         };
         Preloader.prototype.create = function () {
-            var gameWidth = 1920;
-            var gameHeight = 1080;
+            var gameWidth = 1600;
+            var gameHeight = 640;
             if (this.game.device.desktop) {
                 //  If you have any desktop specific settings, they can go in here
-                //this.game.scale.maxWidth = gameWidth;
-                //this.game.scale.maxHeight = gameHeight;
+                this.game.scale.maxWidth = gameWidth;
+                this.game.scale.maxHeight = gameHeight;
                 this.game.scale.pageAlignHorizontally = true;
                 this.game.scale.pageAlignVertically = true;
                 this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -96,14 +96,11 @@ var CodeBarWar;
             this.layer = this.map.createLayer('Donjon1');
             this.layer.resizeWorld();
             this.layer.wrap = true;
-            this.hero = new CodeBarWar.Character(this.game, "fille", 200, 200);
-            this.monsters.push(new CodeBarWar.Character(this.game, "rose", 500, 300));
+            this.hero = new CodeBarWar.Character(this.game, "fille", 320, 96, true);
+            this.monsters.push(new CodeBarWar.Character(this.game, "rose", 544, 320, false));
         };
         Donjon.prototype.update = function () {
-            this.hero.update();
-            this.monsters.forEach(function (monster) {
-                monster.update();
-            });
+            CodeBarWar.Character.update();
         };
         return Donjon;
     }(Phaser.State));
@@ -132,7 +129,7 @@ var CodeBarWar;
     var CodeBarWarMain = (function (_super) {
         __extends(CodeBarWarMain, _super);
         function CodeBarWarMain() {
-            var _this = _super.call(this, 1600, 900, Phaser.AUTO, 'content', null) || this;
+            var _this = _super.call(this, 1600, 640, Phaser.AUTO, 'content', null) || this;
             // Main Menu
             // this.state.add('Boot', Boot, true);
             _this.state.add('Preloader', CodeBarWar.Preloader, false);
@@ -156,7 +153,7 @@ var CodeBarWar;
 var CodeBarWar;
 (function (CodeBarWar) {
     var Character = (function () {
-        function Character(game, source, posX, posY) {
+        function Character(game, source, posX, posY, hero) {
             this.game = game;
             this.sprite = game.add.sprite(posX, posY, source);
             this.sprite.scale.setTo(0.5, 0.5);
@@ -164,35 +161,65 @@ var CodeBarWar;
             this.sprite.animations.add("walkleft", [3, 4, 5]);
             this.sprite.animations.add("walkright", [6, 7, 8]);
             this.sprite.animations.add("walkup", [9, 10, 11]);
+            this.isHero = hero;
+            Character.listOfCharacters.push(this);
         }
-        Character.prototype.update = function () {
-            var movementOn = false;
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
-                this.sprite.x -= 2;
-                this.sprite.animations.play('walkleft', 9, true);
-                movementOn = true;
+        Character.prototype.updatePos = function (x, y) {
+            if (x != 0) {
+                this.sprite.x += x;
+                if (x > 0) {
+                    this.sprite.animations.play('walkright', 9, true);
+                }
+                else {
+                    this.sprite.animations.play('walkleft', 9, true);
+                }
             }
-            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
-                this.sprite.x += 2;
-                this.sprite.animations.play('walkright', 9, true);
-                movementOn = true;
+            else if (y != 0) {
+                this.sprite.y += y;
+                if (y < 0) {
+                    this.sprite.animations.play('walkup', 9, true);
+                }
+                else {
+                    this.sprite.animations.play('walkdown', 9, true);
+                }
             }
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.UP)) {
-                this.sprite.y -= 2;
-                this.sprite.animations.play('walkup', 9, true);
-                movementOn = true;
-            }
-            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
-                this.sprite.y += 2;
-                this.sprite.animations.play('walkdown', 9, true);
-                movementOn = true;
-            }
-            if (movementOn == false) {
+            else {
                 this.sprite.animations.stop(null, true);
             }
         };
+        Character.prototype.moveHero = function () {
+            var x = 0;
+            var y = 0;
+            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Q)) {
+                x -= 2;
+            }
+            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.D)) {
+                x += 2;
+            }
+            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Z)) {
+                y -= 2;
+            }
+            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.S)) {
+                y += 2;
+            }
+            this.updatePos(x, y);
+        };
+        Character.prototype.update = function () {
+            if (this.isHero == true) {
+                this.moveHero();
+            }
+            else {
+                this.updatePos(2, 0);
+            }
+        };
+        Character.update = function () {
+            Character.listOfCharacters.forEach(function (ch) {
+                ch.update();
+            });
+        };
         return Character;
     }());
+    Character.listOfCharacters = [];
     CodeBarWar.Character = Character;
 })(CodeBarWar || (CodeBarWar = {}));
 var CodeBarWar;

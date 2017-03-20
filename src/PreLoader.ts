@@ -10,13 +10,13 @@ module CodeBarWar {
         }
 
         create() {
-            let gameWidth:number = 1920;
-            let gameHeight:number = 1080;
+            let gameWidth:number = 1600;
+            let gameHeight:number = 640;
 
             if (this.game.device.desktop) {
                 //  If you have any desktop specific settings, they can go in here
-                //this.game.scale.maxWidth = gameWidth;
-                //this.game.scale.maxHeight = gameHeight;
+                this.game.scale.maxWidth = gameWidth;
+                this.game.scale.maxHeight = gameHeight;
                 this.game.scale.pageAlignHorizontally = true;
                 this.game.scale.pageAlignVertically = true;
                 this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
