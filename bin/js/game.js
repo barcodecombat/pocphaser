@@ -90,9 +90,11 @@ var CodeBarWar;
             this.game.load.atlasJSONHash('rose', 'assets/characters/rose.png', 'assets/characters/animateRose.json');
         };
         Donjon.prototype.create = function () {
+            this.game.physics.startSystem(Phaser.Physics.ARCADE);
             this.game.stage.backgroundColor = '#787878';
             this.map = this.game.add.tilemap('donjon');
             this.map.addTilesetImage('Donjon1-1', 'tiles');
+            this.map.setCollisionBetween(1, 100);
             this.layer = this.map.createLayer('Donjon1');
             this.layer.resizeWorld();
             this.layer.wrap = true;
@@ -100,7 +102,7 @@ var CodeBarWar;
             this.monsters.push(new CodeBarWar.Character(this.game, "rose", 544, 320, false));
         };
         Donjon.prototype.update = function () {
-            CodeBarWar.Character.update();
+            CodeBarWar.Character.update(this.layer);
         };
         return Donjon;
     }(Phaser.State));
@@ -154,6 +156,11 @@ var CodeBarWar;
 (function (CodeBarWar) {
     var Character = (function () {
         function Character(game, source, posX, posY, hero) {
+            this.Name = "";
+            this.sprite = null;
+            this.game = null;
+            this.isHero = false;
+            this.hitPoints = 100;
             this.game = game;
             this.sprite = game.add.sprite(posX, posY, source);
             this.sprite.scale.setTo(0.5, 0.5);
@@ -162,11 +169,14 @@ var CodeBarWar;
             this.sprite.animations.add("walkright", [6, 7, 8]);
             this.sprite.animations.add("walkup", [9, 10, 11]);
             this.isHero = hero;
+            this.game.physics.enable(this.sprite);
+            this.sprite.body.setSize(32, 32, 8, 8);
             Character.listOfCharacters.push(this);
         }
         Character.prototype.updatePos = function (x, y) {
             if (x != 0) {
-                this.sprite.x += x;
+                //this.sprite.x += x;
+                this.sprite.body.velocity.x = x * 50;
                 if (x > 0) {
                     this.sprite.animations.play('walkright', 9, true);
                 }
@@ -175,7 +185,8 @@ var CodeBarWar;
                 }
             }
             else if (y != 0) {
-                this.sprite.y += y;
+                //this.sprite.y += y;
+                this.sprite.body.velocity.y = y * 50;
                 if (y < 0) {
                     this.sprite.animations.play('walkup', 9, true);
                 }
@@ -185,36 +196,58 @@ var CodeBarWar;
             }
             else {
                 this.sprite.animations.stop(null, true);
+                this.sprite.body.velocity.x = 0;
+                this.sprite.body.velocity.y = 0;
             }
         };
         Character.prototype.moveHero = function () {
             var x = 0;
             var y = 0;
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Q)) {
+            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Q))
                 x -= 2;
-            }
-            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.D)) {
+            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.D))
                 x += 2;
-            }
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Z)) {
+            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Z))
                 y -= 2;
-            }
-            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.S)) {
+            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.S))
                 y += 2;
-            }
             this.updatePos(x, y);
         };
-        Character.prototype.update = function () {
-            if (this.isHero == true) {
-                this.moveHero();
-            }
-            else {
-                this.updatePos(2, 0);
+        Character.prototype.calcDistance = function (ch1, ch2) {
+            var distance;
+            var xSq;
+            var ySq;
+            var distance;
+            xSq = ch1.sprite.x - ch2.sprite.x;
+            ySq = ch1.sprite.y - ch2.sprite.y;
+            distance = Math.sqrt(xSq * xSq + ySq * ySq);
+            return distance;
+        };
+        Character.prototype.actionHero = function () {
+            if (this.game.input.keyboard.isDown(Phaser.Keyboard.K)) {
+                var _this = this;
+                Character.listOfCharacters.forEach(function (ch) {
+                    if (ch.isHero == false) {
+                        var distance;
+                        distance = _this.calcDistance(_this, ch);
+                    }
+                });
             }
         };
-        Character.update = function () {
+        Character.prototype.update = function (layer) {
+            this.game.physics.arcade.collide(this.sprite, layer);
+            if (this.isHero == true) {
+                console.log(this.sprite.x);
+                this.moveHero();
+                this.actionHero();
+            }
+            else {
+                console.log("hp = " + this.hitPoints);
+            }
+        };
+        Character.update = function (layer) {
             Character.listOfCharacters.forEach(function (ch) {
-                ch.update();
+                ch.update(layer);
             });
         };
         return Character;
