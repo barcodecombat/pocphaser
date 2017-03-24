@@ -8,8 +8,13 @@ module CodeBarWar {
         game : CodeBarWarMain = null;
         isHero : boolean = false;
         hitPoints : number = 100;
+        direction : number ; //0 up, 1 down, 2 right, 3 left
+        lastActionTicks : number = 0;
+        speed : number = 5;
+        item : Weapon = null;
 
         constructor(game:CodeBarWarMain, source:string,posX:number,posY:number,hero:boolean){
+            
             this.game = game;
             this.sprite = game.add.sprite(posX,posY,source);
             this.sprite.scale.setTo(0.5,0.5);
@@ -22,6 +27,9 @@ module CodeBarWar {
             this.sprite.body.setSize(32, 32, 8, 8);
             
             Character.listOfCharacters.push(this);
+            if (this.isHero){
+                this.item = new Weapon();
+            }
         }
 
         updatePos(x,y){
@@ -29,8 +37,10 @@ module CodeBarWar {
                 this.sprite.body.velocity.x = x*50;
                 if (x>0){
                     this.sprite.animations.play('walkright', 9, true);    
+                    this.direction=2;
                 }else{
                     this.sprite.animations.play('walkleft', 9, true);    
+                    this.direction=3;
                 }
             }else{
                 this.sprite.body.velocity.x = 0;
@@ -39,8 +49,10 @@ module CodeBarWar {
                 this.sprite.body.velocity.y = y*50;
                 if (y<0){
                     this.sprite.animations.play('walkup', 9, true);
+                    this.direction=0;
                 }else{
                     this.sprite.animations.play('walkdown', 9, true);
+                    this.direction=1;
                 }
             }else{
                 this.sprite.body.velocity.y = 0;
@@ -52,11 +64,11 @@ module CodeBarWar {
             var x : number =0;
             var y : number =0;
             
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Q)) x -= 2;
-            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.D)) x += 2;
+            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Q)) x -= this.speed;
+            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.D)) x += this.speed;
 
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Z)) y -= 2;
-            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.S))y += 2;
+            if (this.game.input.keyboard.isDown(Phaser.Keyboard.Z)) y -= this.speed;
+            else if (this.game.input.keyboard.isDown(Phaser.Keyboard.S))y += this.speed;
             
             this.updatePos(x,y);
         }
@@ -75,21 +87,65 @@ module CodeBarWar {
 
         actionHero(){
             if (this.game.input.keyboard.isDown(Phaser.Keyboard.K)){
-                var _this : Character = this;
-                Character.listOfCharacters.forEach(function(ch){
-                    if (ch.isHero == false) {
-                        var distance : number;
-                        distance = _this.calcDistance(_this,ch);
-                        
+                var diff : number = this.game.time.time - this.lastActionTicks;
+                if (diff >100){
+                    this.lastActionTicks = this.game.time.time;
+                    var _this : Character = this;
+                    var range :number = 10;
+                    var rotateRange :number = 10;
+                    if (_this.item != null){
+                        range = _this.item.range;
+                        rotateRange = _this.item.rotateRange;
                     }
-                });
+
+                    Character.listOfCharacters.forEach(function(ch){
+                        if (ch.isHero == false) {
+                            var isNear : boolean=false;
+                            
+                            if((_this.direction==1)&&(ch.sprite.y>_this.sprite.y)){
+                                var diffY :number = ch.sprite.y-_this.sprite.y;
+                                var diffX :number = Math.abs(ch.sprite.x-_this.sprite.x);
+                                var max : number = diffY * Math.cos(rotateRange);
+                                if ((diffY<range) && (diffX<max))
+                                    isNear = true;
+                            }
+                            if((_this.direction==0)&&(ch.sprite.y<_this.sprite.y)){
+                                var diffY :number = _this.sprite.y-ch.sprite.y;
+                                var diffX :number = Math.abs(ch.sprite.x-_this.sprite.x);
+                                var max : number = diffY * Math.cos(rotateRange);
+                                if ((diffY<range) && (diffX<max))
+                                    isNear = true;
+                            }
+                            if((_this.direction==3)&&(ch.sprite.x<_this.sprite.x)&&((_this.sprite.x-ch.sprite.x)<50)){
+                                var diffX :number = _this.sprite.x-ch.sprite.x;
+                                var diffY :number = Math.abs(ch.sprite.y-_this.sprite.y);
+                                var max : number = diffX * Math.cos(rotateRange);
+                                if ((diffX<range) && (diffY<max))
+                                    isNear = true;
+                            }
+                            if((_this.direction==2)&&(ch.sprite.x>_this.sprite.x)&&((ch.sprite.x-_this.sprite.x)<50)){
+                                var diffX :number = ch.sprite.x-_this.sprite.x;
+                                var diffY :number = Math.abs(ch.sprite.y-_this.sprite.y);
+                                var max : number = diffX * Math.cos(rotateRange);
+                                if ((diffX<range) && (diffY<max))
+                                    isNear = true;
+                            }
+                            if (isNear == true){
+                                if (_this.item!=null){
+                                    var degat : number = Math.floor(Math.random() * _this.item.maxDegat) + _this.item.minDegat;
+                                    ch.hitPoints -= degat;
+                                    new DegatText(<CodeBarWarMain>_this.game,""+degat,ch.sprite.x+10,ch.sprite.y-10,_this.game.time.time,"#00ff00");
+                                }
+                            }
+                        }
+                    });
+                }
             }
         }
 
         update(layer){
             this.game.physics.arcade.collide(this.sprite, layer);
             if(this.isHero == true){
-                console.log(this.sprite.x);
                 this.moveHero();
                 this.actionHero();
             }else{

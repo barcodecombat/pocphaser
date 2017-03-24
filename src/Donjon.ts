@@ -5,6 +5,10 @@ module CodeBarWar {
         map;
         layer;
         sp;
+        bmd;
+
+        innerCircle;
+        outerCircle
         hero : Character;
         monsters : Character[] = [];
 
@@ -26,14 +30,21 @@ module CodeBarWar {
             this.layer = this.map.createLayer('Donjon1');
             this.layer.resizeWorld();
             this.layer.wrap = true;
-            
+            this.bmd = this.game.make.bitmapData(1280, 1024);
+            this.bmd.addToWorld();
+            //this.game.add.sprite(0,0,this.bmd);
             this.hero = new Character(<CodeBarWarMain>this.game,"fille",320,96,true);
             this.monsters.push(new Character(<CodeBarWarMain>this.game,"rose",544,320,false));
-            
+
+            this.innerCircle = new Phaser.Circle(200, 200, 100);
+
+
         }
 
         update(){
             Character.update(this.layer);
+            DegatText.update();
+            this.bmd.alphaMask(this.hero.sprite,this.layer);
         }
 
     }

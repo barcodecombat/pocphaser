@@ -14,6 +14,9 @@
         "./src/MainMenu.ts",
         "./src/Donjon.ts",
         "./src/LoaderDonjon.ts",
+        "./src/DegatText.ts",
+        "./src/Item.ts",
+        "./src/Weapon.ts",
         "./src/CodeBarWar.ts",
         "./src/Character.ts",
         "./src/Player.ts"

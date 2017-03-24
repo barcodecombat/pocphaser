@@ -98,11 +98,17 @@ var CodeBarWar;
             this.layer = this.map.createLayer('Donjon1');
             this.layer.resizeWorld();
             this.layer.wrap = true;
+            this.bmd = this.game.make.bitmapData(1280, 1024);
+            this.bmd.addToWorld();
+            //this.game.add.sprite(0,0,this.bmd);
             this.hero = new CodeBarWar.Character(this.game, "fille", 320, 96, true);
             this.monsters.push(new CodeBarWar.Character(this.game, "rose", 544, 320, false));
+            this.innerCircle = new Phaser.Circle(200, 200, 100);
         };
         Donjon.prototype.update = function () {
             CodeBarWar.Character.update(this.layer);
+            CodeBarWar.DegatText.update();
+            this.bmd.alphaMask(this.hero.sprite, this.layer);
         };
         return Donjon;
     }(Phaser.State));
@@ -125,6 +131,84 @@ var CodeBarWar;
         return LoaderDonjon;
     }(Phaser.State));
     CodeBarWar.LoaderDonjon = LoaderDonjon;
+})(CodeBarWar || (CodeBarWar = {}));
+var CodeBarWar;
+(function (CodeBarWar) {
+    var DegatText = (function () {
+        function DegatText(game, text, posX, posY, timer, color) {
+            this.Name = "";
+            this.text = null;
+            this.game = null;
+            this.timer = 0;
+            this.game = game;
+            this.text = game.add.text(posX, posY, text, { font: "20px Arial", fill: color, align: "center" });
+            ;
+            this.timer = timer;
+            DegatText.listOfText.push(this);
+        }
+        DegatText.prototype.update = function () {
+            if ((this.game.time.time - this.timer) > 500) {
+                this.text.destroy();
+                return true;
+            }
+            else {
+                this.text.y -= 5;
+            }
+            return false;
+        };
+        DegatText.update = function () {
+            var listToDelete = [];
+            DegatText.listOfText.forEach(function (dt) {
+                if (dt.update()) {
+                    listToDelete.push(dt);
+                }
+            });
+            if (listToDelete.length > 0) {
+                var newList = [];
+                DegatText.listOfText.forEach(function (dt) {
+                    var found = false;
+                    for (var i = 0; i < listToDelete.length; i++) {
+                        if (listToDelete[i] == dt) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found == false) {
+                        newList.push(dt);
+                    }
+                });
+                DegatText.listOfText = newList;
+            }
+        };
+        return DegatText;
+    }());
+    DegatText.listOfText = [];
+    CodeBarWar.DegatText = DegatText;
+})(CodeBarWar || (CodeBarWar = {}));
+var CodeBarWar;
+(function (CodeBarWar) {
+    var Item = (function () {
+        function Item() {
+        }
+        return Item;
+    }());
+    CodeBarWar.Item = Item;
+})(CodeBarWar || (CodeBarWar = {}));
+var CodeBarWar;
+(function (CodeBarWar) {
+    var Weapon = (function (_super) {
+        __extends(Weapon, _super);
+        function Weapon() {
+            var _this = _super.call(this) || this;
+            _this.range = 50;
+            _this.rotateRange = 45;
+            _this.minDegat = 1;
+            _this.maxDegat = 6;
+            return _this;
+        }
+        return Weapon;
+    }(CodeBarWar.Item));
+    CodeBarWar.Weapon = Weapon;
 })(CodeBarWar || (CodeBarWar = {}));
 var CodeBarWar;
 (function (CodeBarWar) {
@@ -161,6 +245,9 @@ var CodeBarWar;
             this.game = null;
             this.isHero = false;
             this.hitPoints = 100;
+            this.lastActionTicks = 0;
+            this.speed = 5;
+            this.item = null;
             this.game = game;
             this.sprite = game.add.sprite(posX, posY, source);
             this.sprite.scale.setTo(0.5, 0.5);
@@ -172,45 +259,53 @@ var CodeBarWar;
             this.game.physics.enable(this.sprite);
             this.sprite.body.setSize(32, 32, 8, 8);
             Character.listOfCharacters.push(this);
+            if (this.isHero) {
+                this.item = new CodeBarWar.Weapon();
+            }
         }
         Character.prototype.updatePos = function (x, y) {
             if (x != 0) {
-                //this.sprite.x += x;
                 this.sprite.body.velocity.x = x * 50;
                 if (x > 0) {
                     this.sprite.animations.play('walkright', 9, true);
+                    this.direction = 2;
                 }
                 else {
                     this.sprite.animations.play('walkleft', 9, true);
-                }
-            }
-            else if (y != 0) {
-                //this.sprite.y += y;
-                this.sprite.body.velocity.y = y * 50;
-                if (y < 0) {
-                    this.sprite.animations.play('walkup', 9, true);
-                }
-                else {
-                    this.sprite.animations.play('walkdown', 9, true);
+                    this.direction = 3;
                 }
             }
             else {
-                this.sprite.animations.stop(null, true);
                 this.sprite.body.velocity.x = 0;
+            }
+            if (y != 0) {
+                this.sprite.body.velocity.y = y * 50;
+                if (y < 0) {
+                    this.sprite.animations.play('walkup', 9, true);
+                    this.direction = 0;
+                }
+                else {
+                    this.sprite.animations.play('walkdown', 9, true);
+                    this.direction = 1;
+                }
+            }
+            else {
                 this.sprite.body.velocity.y = 0;
             }
+            if (x == 0 && y == 0)
+                this.sprite.animations.stop(null, true);
         };
         Character.prototype.moveHero = function () {
             var x = 0;
             var y = 0;
             if (this.game.input.keyboard.isDown(Phaser.Keyboard.Q))
-                x -= 2;
+                x -= this.speed;
             else if (this.game.input.keyboard.isDown(Phaser.Keyboard.D))
-                x += 2;
+                x += this.speed;
             if (this.game.input.keyboard.isDown(Phaser.Keyboard.Z))
-                y -= 2;
+                y -= this.speed;
             else if (this.game.input.keyboard.isDown(Phaser.Keyboard.S))
-                y += 2;
+                y += this.speed;
             this.updatePos(x, y);
         };
         Character.prototype.calcDistance = function (ch1, ch2) {
@@ -225,19 +320,62 @@ var CodeBarWar;
         };
         Character.prototype.actionHero = function () {
             if (this.game.input.keyboard.isDown(Phaser.Keyboard.K)) {
-                var _this = this;
-                Character.listOfCharacters.forEach(function (ch) {
-                    if (ch.isHero == false) {
-                        var distance;
-                        distance = _this.calcDistance(_this, ch);
+                var diff = this.game.time.time - this.lastActionTicks;
+                if (diff > 100) {
+                    this.lastActionTicks = this.game.time.time;
+                    var _this = this;
+                    var range = 10;
+                    var rotateRange = 10;
+                    if (_this.item != null) {
+                        range = _this.item.range;
+                        rotateRange = _this.item.rotateRange;
                     }
-                });
+                    Character.listOfCharacters.forEach(function (ch) {
+                        if (ch.isHero == false) {
+                            var isNear = false;
+                            if ((_this.direction == 1) && (ch.sprite.y > _this.sprite.y)) {
+                                var diffY = ch.sprite.y - _this.sprite.y;
+                                var diffX = Math.abs(ch.sprite.x - _this.sprite.x);
+                                var max = diffY * Math.cos(rotateRange);
+                                if ((diffY < range) && (diffX < max))
+                                    isNear = true;
+                            }
+                            if ((_this.direction == 0) && (ch.sprite.y < _this.sprite.y)) {
+                                var diffY = _this.sprite.y - ch.sprite.y;
+                                var diffX = Math.abs(ch.sprite.x - _this.sprite.x);
+                                var max = diffY * Math.cos(rotateRange);
+                                if ((diffY < range) && (diffX < max))
+                                    isNear = true;
+                            }
+                            if ((_this.direction == 3) && (ch.sprite.x < _this.sprite.x) && ((_this.sprite.x - ch.sprite.x) < 50)) {
+                                var diffX = _this.sprite.x - ch.sprite.x;
+                                var diffY = Math.abs(ch.sprite.y - _this.sprite.y);
+                                var max = diffX * Math.cos(rotateRange);
+                                if ((diffX < range) && (diffY < max))
+                                    isNear = true;
+                            }
+                            if ((_this.direction == 2) && (ch.sprite.x > _this.sprite.x) && ((ch.sprite.x - _this.sprite.x) < 50)) {
+                                var diffX = ch.sprite.x - _this.sprite.x;
+                                var diffY = Math.abs(ch.sprite.y - _this.sprite.y);
+                                var max = diffX * Math.cos(rotateRange);
+                                if ((diffX < range) && (diffY < max))
+                                    isNear = true;
+                            }
+                            if (isNear == true) {
+                                if (_this.item != null) {
+                                    var degat = Math.floor(Math.random() * _this.item.maxDegat) + _this.item.minDegat;
+                                    ch.hitPoints -= degat;
+                                    new CodeBarWar.DegatText(_this.game, "" + degat, ch.sprite.x + 10, ch.sprite.y - 10, _this.game.time.time, "#00ff00");
+                                }
+                            }
+                        }
+                    });
+                }
             }
         };
         Character.prototype.update = function (layer) {
             this.game.physics.arcade.collide(this.sprite, layer);
             if (this.isHero == true) {
-                console.log(this.sprite.x);
                 this.moveHero();
                 this.actionHero();
             }
