@@ -2,7 +2,9 @@ module CodeBarWar {
 
     export class Character{
         static listOfCharacters : Character[] = [];
+        static sequence : number = 0;
 
+        id : number = 0;
         Name : String = "";
         sprite : Phaser.Sprite = null;
         game : CodeBarWarMain = null;
@@ -14,7 +16,8 @@ module CodeBarWar {
         item : Weapon = null;
 
         constructor(game:CodeBarWarMain, source:string,posX:number,posY:number,hero:boolean){
-            
+            Character.sequence += 1;
+            this.id = Character.sequence;
             this.game = game;
             this.sprite = game.add.sprite(posX,posY,source);
             this.sprite.scale.setTo(0.5,0.5);
@@ -84,22 +87,22 @@ module CodeBarWar {
             return distance;
         }
 
-
-        actionHero(){
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.K)){
-                var diff : number = this.game.time.time - this.lastActionTicks;
-                if (diff >100){
-                    this.lastActionTicks = this.game.time.time;
-                    var _this : Character = this;
-                    var range :number = 10;
-                    var rotateRange :number = 10;
-                    if (_this.item != null){
-                        range = _this.item.range;
-                        rotateRange = _this.item.rotateRange;
-                    }
-
-                    Character.listOfCharacters.forEach(function(ch){
-                        if (ch.isHero == false) {
+        fight(){
+            var diff : number = this.game.time.time - this.lastActionTicks;
+            if (diff >100){
+                this.lastActionTicks = this.game.time.time;
+                var _this : Character = this;
+                var range :number = 10;
+                var rotateRange :number = 10;
+                if (_this.item != null){
+                    range = _this.item.range;
+                    rotateRange = _this.item.rotateRange;
+                }
+                var nbHit : number =0;
+                var monsterKilled : Character[] = [];
+                Character.listOfCharacters.forEach(function(ch){
+                    if (nbHit < _this.item.nbAttack){
+                        if (ch.isHero != _this.isHero) {
                             var isNear : boolean=false;
                             
                             if((_this.direction==1)&&(ch.sprite.y>_this.sprite.y)){
@@ -132,14 +135,52 @@ module CodeBarWar {
                             }
                             if (isNear == true){
                                 if (_this.item!=null){
-                                    var degat : number = Math.floor(Math.random() * _this.item.maxDegat) + _this.item.minDegat;
+                                    let degat : number = Math.floor(Math.random() * _this.item.maxDegat) + _this.item.minDegat;
                                     ch.hitPoints -= degat;
+                                    nbHit += 1;
+                                    console.log("hit" + ch.hitPoints);
                                     new DegatText(<CodeBarWarMain>_this.game,""+degat,ch.sprite.x+10,ch.sprite.y-10,_this.game.time.time,"#00ff00");
+                                    if (ch.hitPoints<=0){
+                                        monsterKilled.push(ch);                        
+                                    }
                                 }
                             }
                         }
-                    });
+                    }
+                });
+                if (monsterKilled.length>0)
+                    this.kill(monsterKilled);
+            }
+        }
+
+        kill(toKill : Character[]){
+            let newList : Character[] =[];
+            Character.listOfCharacters.forEach(function(ch){
+                let found : Character = ch;
+                for(let i:number =0;i<toKill.length;i++){
+                    if(toKill[i] == ch){
+                        found = null;
+                        break;
+                    }
                 }
+                if (found != null){
+                    newList.push(found);
+                }
+            });
+            Character.listOfCharacters = newList;
+            toKill.forEach(function(ch){
+                ch.sprite.destroy();
+            });
+        }
+
+
+        action(){
+            if (this.isHero == true){
+                if (this.game.input.keyboard.isDown(Phaser.Keyboard.K)){
+                    this.fight();
+                }
+            }else{
+
             }
         }
 
@@ -147,10 +188,9 @@ module CodeBarWar {
             this.game.physics.arcade.collide(this.sprite, layer);
             if(this.isHero == true){
                 this.moveHero();
-                this.actionHero();
-            }else{
-                console.log("hp = " + this.hitPoints);
+                
             }
+            this.action();
         }
 
         static update(layer){

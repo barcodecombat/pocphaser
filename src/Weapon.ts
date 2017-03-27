@@ -5,6 +5,7 @@ module CodeBarWar {
         rotateRange : number;
         minDegat : number;
         maxDegat : number;
+        nbAttack : number;
 
         constructor(){
             super();
@@ -12,6 +13,7 @@ module CodeBarWar {
             this.rotateRange = 45;
             this.minDegat = 1;
             this.maxDegat = 6;
+            this.nbAttack = 1;
         }
     }
 }

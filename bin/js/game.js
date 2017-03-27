@@ -204,6 +204,7 @@ var CodeBarWar;
             _this.rotateRange = 45;
             _this.minDegat = 1;
             _this.maxDegat = 6;
+            _this.nbAttack = 1;
             return _this;
         }
         return Weapon;
@@ -240,6 +241,7 @@ var CodeBarWar;
 (function (CodeBarWar) {
     var Character = (function () {
         function Character(game, source, posX, posY, hero) {
+            this.id = 0;
             this.Name = "";
             this.sprite = null;
             this.game = null;
@@ -248,6 +250,8 @@ var CodeBarWar;
             this.lastActionTicks = 0;
             this.speed = 5;
             this.item = null;
+            Character.sequence += 1;
+            this.id = Character.sequence;
             this.game = game;
             this.sprite = game.add.sprite(posX, posY, source);
             this.sprite.scale.setTo(0.5, 0.5);
@@ -318,20 +322,22 @@ var CodeBarWar;
             distance = Math.sqrt(xSq * xSq + ySq * ySq);
             return distance;
         };
-        Character.prototype.actionHero = function () {
-            if (this.game.input.keyboard.isDown(Phaser.Keyboard.K)) {
-                var diff = this.game.time.time - this.lastActionTicks;
-                if (diff > 100) {
-                    this.lastActionTicks = this.game.time.time;
-                    var _this = this;
-                    var range = 10;
-                    var rotateRange = 10;
-                    if (_this.item != null) {
-                        range = _this.item.range;
-                        rotateRange = _this.item.rotateRange;
-                    }
-                    Character.listOfCharacters.forEach(function (ch) {
-                        if (ch.isHero == false) {
+        Character.prototype.fight = function () {
+            var diff = this.game.time.time - this.lastActionTicks;
+            if (diff > 100) {
+                this.lastActionTicks = this.game.time.time;
+                var _this = this;
+                var range = 10;
+                var rotateRange = 10;
+                if (_this.item != null) {
+                    range = _this.item.range;
+                    rotateRange = _this.item.rotateRange;
+                }
+                var nbHit = 0;
+                var monsterKilled = [];
+                Character.listOfCharacters.forEach(function (ch) {
+                    if (nbHit < _this.item.nbAttack) {
+                        if (ch.isHero != _this.isHero) {
                             var isNear = false;
                             if ((_this.direction == 1) && (ch.sprite.y > _this.sprite.y)) {
                                 var diffY = ch.sprite.y - _this.sprite.y;
@@ -365,23 +371,61 @@ var CodeBarWar;
                                 if (_this.item != null) {
                                     var degat = Math.floor(Math.random() * _this.item.maxDegat) + _this.item.minDegat;
                                     ch.hitPoints -= degat;
+                                    nbHit += 1;
+                                    console.log("hit" + ch.hitPoints);
                                     new CodeBarWar.DegatText(_this.game, "" + degat, ch.sprite.x + 10, ch.sprite.y - 10, _this.game.time.time, "#00ff00");
+                                    if (ch.hitPoints <= 0) {
+                                        monsterKilled.push(ch);
+                                    }
                                 }
                             }
                         }
-                    });
+                    }
+                });
+                if (monsterKilled.length > 0)
+                    this.kill(monsterKilled);
+            }
+        };
+        Character.prototype.kill = function (toKill) {
+            console.log("kill " + toKill);
+            var newList = [];
+            Character.listOfCharacters.forEach(function (ch) {
+                var found = ch;
+                console.log("killtokill " + toKill);
+                ;
+                for (var i = 0; i < toKill.length; i++) {
+                    console.log("%o %o", ch, toKill[i]);
+                    if (toKill[i] == ch) {
+                        found = null;
+                        break;
+                    }
                 }
+                if (found != null) {
+                    newList.push(found);
+                }
+            });
+            console.log("newList " + newList.length);
+            Character.listOfCharacters = newList;
+            toKill.forEach(function (ch) {
+                ch.sprite.destroy();
+                console.log("destroy");
+            });
+        };
+        Character.prototype.action = function () {
+            if (this.isHero == true) {
+                if (this.game.input.keyboard.isDown(Phaser.Keyboard.K)) {
+                    this.fight();
+                }
+            }
+            else {
             }
         };
         Character.prototype.update = function (layer) {
             this.game.physics.arcade.collide(this.sprite, layer);
             if (this.isHero == true) {
                 this.moveHero();
-                this.actionHero();
             }
-            else {
-                console.log("hp = " + this.hitPoints);
-            }
+            this.action();
         };
         Character.update = function (layer) {
             Character.listOfCharacters.forEach(function (ch) {
@@ -391,6 +435,7 @@ var CodeBarWar;
         return Character;
     }());
     Character.listOfCharacters = [];
+    Character.sequence = 0;
     CodeBarWar.Character = Character;
 })(CodeBarWar || (CodeBarWar = {}));
 var CodeBarWar;
